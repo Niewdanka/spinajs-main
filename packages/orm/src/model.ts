@@ -860,6 +860,7 @@ export const MODEL_STATIC_MIXINS = {
     const { query, description, container } = createQuery(this, InsertQueryBuilder);
 
     const converter = container.resolve(ObjectToSqlConverter);
+    const sResponseMapper = query.Container.resolve(ServerResponseMapper);
 
     if (Array.isArray(data)) {
       if (insertBehaviour !== InsertBehaviour.None) {
@@ -896,14 +897,15 @@ export const MODEL_STATIC_MIXINS = {
 
     const iMidleware = {
       afterQuery: (result: IUpdateResult) => {
+        const response = sResponseMapper.read(result);
         if (Array.isArray(data)) {
           (data as Array<InstanceType<T>>).forEach((v, idx) => {
             if (v instanceof ModelBase) {
-              v.PrimaryKeyValue = v.PrimaryKeyValue ?? result.LastInsertId - data.length + idx + 1;
+              v.PrimaryKeyValue = v.PrimaryKeyValue ?? response.LastInsertId + idx;
             }
           });
         } else if (data instanceof ModelBase) {
-          (data as InstanceType<T>).PrimaryKeyValue = (data as InstanceType<T>).PrimaryKeyValue ?? result.LastInsertId;
+          (data as InstanceType<T>).PrimaryKeyValue = (data as InstanceType<T>).PrimaryKeyValue ?? response.LastInsertId;
         }
 
         return result;
