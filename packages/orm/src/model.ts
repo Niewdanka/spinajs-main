@@ -1,7 +1,7 @@
 import { ModelData, ModelDataWithRelationData, PartialArray, PickRelations } from './types.js';
 import { SortOrder } from './enums.js';
 import { MODEL_DESCTRIPTION_SYMBOL } from './symbols.js';
-import { IModelDescriptor, RelationType, InsertBehaviour, IUpdateResult, IOrderByBuilder, ISelectQueryBuilder, IWhereBuilder, QueryScope, IHistoricalModel, ModelToSqlConverter, ObjectToSqlConverter, IModelBase, IRelationDescriptor, ServerResponseMapper, IDehydrateOptions } from './interfaces.js';
+import { IModelDescriptor, RelationType, InsertBehaviour, IUpdateResult, IOrderByBuilder, ISelectQueryBuilder, IWhereBuilder, QueryScope, IHistoricalModel, ModelToSqlConverter, ObjectToSqlConverter, IModelBase, IRelationDescriptor, ServerResponseMapper, IDehydrateOptions, ITransaction } from './interfaces.js';
 import { WhereFunction } from './types.js';
 import { RawQuery, UpdateQueryBuilder, TruncateTableQueryBuilder, SelectQueryBuilder, DeleteQueryBuilder, InsertQueryBuilder, createQuery, _descriptor } from './builders.js';
 import { Op } from './enums.js';
@@ -180,7 +180,7 @@ export class ModelBase<M = unknown> implements IModelBase {
     return reduceRelations(this);
   }
 
-  public static getModelDescriptor() : IModelDescriptor {
+  public static getModelDescriptor(): IModelDescriptor {
     throw new Error('Not implemented');
   }
 
@@ -389,6 +389,10 @@ export class ModelBase<M = unknown> implements IModelBase {
   }
 
   public static whereNotExists<T extends typeof ModelBase>(this: T, _query: ISelectQueryBuilder<T>): ISelectQueryBuilder<Array<InstanceType<T>>> {
+    throw new Error('Not implemented');
+  }
+
+  public static transaction<T extends typeof ModelBase>(this: T, _callback: (trx: OrmDriver) => Promise<void>): Promise<ITransaction> {
     throw new Error('Not implemented');
   }
 
@@ -1149,6 +1153,11 @@ export const MODEL_STATIC_MIXINS = {
       await query.asRaw<{ count: number }>()
     ).count;
   },
+
+  async transaction<T extends typeof ModelBase>(this: T, callback: (trx: OrmDriver) => Promise<void>) {
+    const driver = this.getModelDescriptor();
+    return driver.Driver.transaction(callback);
+  }
 };
 
 export const _modelProxyFactory = (_c: IContainer, model: Constructor<ModelBase>) => {
