@@ -926,7 +926,7 @@ export class WhereBuilder<T> implements IWhereBuilder<T> {
             } else {
               sourcePKey = `\`${sourceAlias}\`.\`${(self._model as any).getModelDescriptor().PrimaryKey}\``;
             }
-            relQuery.where(new RawQuery(`${rel.ForeignKey} = ${sourcePKey}`));
+            this.where(new RawQuery(`${rel.ForeignKey} = ${sourcePKey}`));
           }));
 
           if (callback) {
@@ -946,7 +946,7 @@ export class WhereBuilder<T> implements IWhereBuilder<T> {
               sourcePKey = `\`${sourceAlias}\`.\`${(self._model as any).getModelDescriptor().PrimaryKey}\``;
             }
 
-            relQuery.where(new RawQuery(`${rel.JunctionModelSourceModelFKey_Name} = ${sourcePKey}`));
+            this.where(new RawQuery(`${rel.JunctionModelSourceModelFKey_Name} = ${sourcePKey}`));
           }));
 
           (this as unknown as SelectQueryBuilder).setAlias();
@@ -998,14 +998,14 @@ export class WhereBuilder<T> implements IWhereBuilder<T> {
             } else {
               sourcePKey = `\`${sourceAlias}\`.\`${(self._model as any).getModelDescriptor().PrimaryKey}\``;
             }
-            relQuery.where(new RawQuery(`${rel.ForeignKey} = ${sourcePKey}`));
+            this.where(new RawQuery(`${rel.ForeignKey} = ${sourcePKey}`));
           }));
 
           if (callback) {
             callback.apply(relQuery);
           }
 
-          this.whereExist(relQuery);
+          this.whereNotExists(relQuery);
 
           break;
         case RelationType.ManyToMany:
@@ -1018,7 +1018,7 @@ export class WhereBuilder<T> implements IWhereBuilder<T> {
             } else {
               sourcePKey = `\`${sourceAlias}\`.\`${(self._model as any).getModelDescriptor().PrimaryKey}\``;
             }
-            relQuery.where(new RawQuery(`${rel.JunctionModelSourceModelFKey_Name} = ${sourcePKey}`));
+            this.where(new RawQuery(`${rel.JunctionModelSourceModelFKey_Name} = ${sourcePKey}`));
           }));
 
           relQuery.rightJoin({
@@ -1189,6 +1189,7 @@ export class SelectQueryBuilder<T = any> extends QueryBuilder<T> {
     builder._distinct = this._distinct;
     builder._table = this._table;
     builder._tableAlias = this._tableAlias;
+    builder._database = this._database;
     builder._cteStatement = this._cteStatement ? this._cteStatement.clone(builder) : null;
     builder._first = this._first;
     builder._nonSelect = this._nonSelect;
