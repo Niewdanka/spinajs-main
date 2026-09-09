@@ -155,4 +155,37 @@ describe('orm-http filter translation vs the per-statement connector (I1/B2)', (
     // `true` binds as 1: the SQLite driver's boolean converter runs before binding.
     expect(out.bindings).to.deep.equal([18, 1, 'admin']);
   });
+
+  it('applies a nested group as one bracketed condition, ANDed to its siblings', () => {
+    // The multi-column search case: one text matched against several columns, while the filter
+    // narrowing the pool keeps ANDing. Flattening the group would turn that AND into an OR and
+    // widen the result to every row in every pool.
+    const filters = [
+      f('Role', 'eq', 'admin'),
+      {
+        op: FilterableLogicalOperators.Or,
+        filters: [f('Age', 'eq', 18), f('Active', 'eq', true)],
+      },
+    ];
+
+    const out = (q() as any)
+      .filter(filters, FilterableLogicalOperators.And)
+      .toDB();
+
+    expect(out.expression).to.contain('`Role` = ? AND ( `Age` = ? OR `Active` = ? )');
+    expect(out.bindings).to.deep.equal(['admin', 18, 1]);
+  });
+
+  it('rejects a group whose column is not filterable, like any other condition', () => {
+    const filters = [
+      {
+        op: FilterableLogicalOperators.Or,
+        filters: [f('Secret', 'eq', 'x')],
+      },
+    ];
+
+    expect(() =>
+      (q() as any).filter(filters, FilterableLogicalOperators.And).toDB(),
+    ).to.throw(/not filterable/);
+  });
 });
